@@ -3,17 +3,28 @@ files = dir('/Users/sarahelnozahy/Downloads/*.mat');
 direct = '/Users/sarahelnozahy/Downloads/';
 numFiles = length(files);
 filenames = strings(numFiles,1);
+<<<<<<< HEAD
 % for i= 1:numFiles
 %     filenames(i) = strcat('/Users/sarahelnozahy/Downloads/', files(i).name);
 %     load(filenames(i));
+=======
+for i= 1:numFiles
+    filenames(i) = strcat('/Users/sarahelnozahy/Downloads/', files(i).name);
+    load(filenames(i));
+>>>>>>> 8f1ea10e7d3533f793d5ee33c5b24d2fafddeae4
     %% calculate basic statistics for lever pressing task
     clearvars -except SessionData;
     numlicksbeforepress = zeros(SessionData.nTrials,1);
     lickbeforepress = zeros(SessionData.nTrials,1);
     lickafterpress = zeros(SessionData.nTrials,1);
     firstlever = zeros(SessionData.nTrials,1);
+<<<<<<< HEAD
     hit =0; miss =0; cr = 0; fa = 0;
  
+=======
+    hit = zeros(SessionData.nTrials,1);
+
+>>>>>>> 8f1ea10e7d3533f793d5ee33c5b24d2fafddeae4
     for i=1:SessionData.nTrials % increment through all the trials in one given session
         if isfield(SessionData.RawEvents.Trial{1,i}.Events,'SoftCode1') % If a manual delivery is administered
             % all variables are undefined due to manual delivery
@@ -34,6 +45,7 @@ filenames = strings(numFiles,1);
                 licklever = lick-lever(1);
                 lickafterpress(i) = licklever(1);
             end
+<<<<<<< HEAD
         end
         if ~isnan(SessionData.RawEvents.Trial{1,i}.States.Drinking)
             hit = hit+1;
@@ -48,6 +60,19 @@ filenames = strings(numFiles,1);
 figure('name','Lever Analysis'); % create figure for plots
 smoothsize = 5; % size of smoothed line
 firstlever(isnan(firstlever)) = []; % get rid of NaN's in firstlever
+=======
+        end
+        clear lever lick; % clear these variables for current trial
+    end    
+
+figure('name','Lever Analysis'); % create figure for plots
+smoothsize = 5; % size of smoothed line
+firstlever(isnan(firstlever)) = []; % get rid of NaN's in firstlever
+% subplot(411); plot(numlicksbeforepress,'b'); hold on;
+% plot(movmedian(numlicksbeforepress,smoothsize),'Color','b','LineWidth',3); % smoothed line
+% xlim([0 SessionData.nTrials]); ylim([0 30]); % set x-axis and y-axis
+% title('Number of licks before lever press');
+>>>>>>> 8f1ea10e7d3533f793d5ee33c5b24d2fafddeae4
 
 subplot(411); plot(lickbeforepress,'r');hold on;
 plot(movmedian(lickbeforepress,smoothsize),'Color','r','LineWidth',3); % smoothed line
@@ -64,6 +89,7 @@ plot(movmedian(firstlever, smoothsize), 'Color', 'g', 'LineWidth', 3);
 xlim([0 30]); ylim([0 15]); % set x-axis and y-axis
 title('Time of initial lever press');
 
+<<<<<<< HEAD
 subplot(414); 
 uicontrol('Style', 'text', 'String', 'Hits = ', 'units', 'normalized', 'Position', [.05 .05 .2 .22], 'FontWeight', 'bold', 'FontSize', 20, 'FontName', 'Arial', 'BackgroundColor', [.2 .8 1]); % Licks label
 uicontrol('Style', 'text', 'String', num2str(hit), 'units', 'normalized', 'Position', [.2 .05 .1 .22], 'FontWeight', 'bold', 'FontSize', 20, 'FontName', 'Arial', 'BackgroundColor', [.2 .8 1]); % Licks label
@@ -73,3 +99,8 @@ uicontrol('Style', 'text', 'String', 'False Alarms = ', 'units', 'normalized', '
 uicontrol('Style', 'text', 'String', num2str(fa), 'units', 'normalized', 'Position', [.8 .05 .18 .22], 'FontWeight', 'bold', 'FontSize', 20, 'FontName', 'Arial', 'BackgroundColor', [.2 .8 1]); % Licks label
 
 % end
+=======
+subplot(414);
+
+end
+>>>>>>> 8f1ea10e7d3533f793d5ee33c5b24d2fafddeae4
