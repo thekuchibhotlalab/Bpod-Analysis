@@ -48,7 +48,7 @@ filenames = strings(numFiles,1);
 figure('name','Lever Analysis'); % create figure for plots
 smoothsize = 5; % size of smoothed line
 firstlever(isnan(firstlever)) = []; % get rid of NaN's in firstlever
-
+xaxis = size(firstlever);
 subplot(411); plot(lickbeforepress,'r');hold on;
 plot(movmedian(lickbeforepress,smoothsize),'Color','r','LineWidth',3); % smoothed line
 xlim([0 SessionData.nTrials]); ylim([0 15]);% set x-axis
@@ -61,17 +61,12 @@ title('Lick latency after press');
 
 subplot(413); plot(firstlever, 'g'); hold on;
 plot(movmedian(firstlever, smoothsize), 'Color', 'g', 'LineWidth', 3);
-xlim([0 30]); ylim([0 15]); % set x-axis and y-axis
+xlim([0 xaxis(1)]); ylim([0 15]); % set x-axis and y-axis
 title('Time of initial lever press');
 
 subplot(414); 
-uicontrol('Style', 'text', 'String', 'Hits = ', 'units', 'normalized', 'Position', [.05 .05 .2 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-uicontrol('Style', 'text', 'String', num2str(hit), 'units', 'normalized', 'Position', [.2 .05 .1
-     .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-uicontrol('Style', 'text', 'String', 'Miss = ', 'units', 'normalized', 'Position', [.3 .05 .1 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-uicontrol('Style', 'text', 'String', num2str(miss), 'units', 'normalized', 'Position', [.4 .05 .1 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-uicontrol('Style', 'text', 'String', 'False Alarms = ', 'units', 'normalized', 'Position', [.6 .15 .1 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-uicontrol('Style', 'text', 'String', num2str(fa), 'units', 'normalized', 'Position', [.65 .1 .1 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
-
+uicontrol('Style', 'text', 'String', ['Hits = ' num2str(hit)], 'units', 'normalized', 'Position', [.05 .05 .25 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
+uicontrol('Style', 'text', 'String', ['Miss = ' num2str(miss)], 'units', 'normalized', 'Position', [.3 .05 .3 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
+uicontrol('Style', 'text', 'String', ['False Alarms = ' num2str(fa)], 'units', 'normalized', 'Position', [.55 .05 .4 .21], 'FontWeight', 'bold', 'FontSize', 16, 'FontName', 'Arial', 'BackgroundColor', [.7 .2 1]); % Licks label
 
 % end
