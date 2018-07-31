@@ -1,11 +1,11 @@
 %% load data
-files = dir('/Users/sarahelnozahy/Downloads/*.mat');
-direct = '/Users/sarahelnozahy/Downloads/';
-numFiles = length(files);
-filenames = strings(numFiles,1);
-for i= 1:numFiles
-    filenames(i) = strcat('/Users/sarahelnozahy/Downloads/', files(i).name);
-    load(filenames(i));
+% files = dir('/Users/sarahelnozahy/Downloads/*.mat');
+% direct = '/Users/sarahelnozahy/Downloads/';
+% numFiles = length(files);
+% filenames = strings(numFiles,1);
+% for i= 1:numFiles
+%     filenames(i) = strcat('/Users/sarahelnozahy/Downloads/', files(i).name);
+%     load(filenames(i));
     %% calculate basic statistics for lever pressing task
     clearvars -except SessionData;
     numlicksbeforepress = zeros(SessionData.nTrials,1);
@@ -58,9 +58,9 @@ title('Lick latency after press');
 
 subplot(413); plot(firstlever, 'g'); hold on;
 plot(movmedian(firstlever, smoothsize), 'Color', 'g', 'LineWidth', 3);
-xlim([0 30]); ylim([0 15]); % set x-axis and y-axis
+xlim([0 150]); ylim([0 15]); % set x-axis and y-axis
 title('Time of initial lever press');
 
 subplot(414);
 
-end
+% end
