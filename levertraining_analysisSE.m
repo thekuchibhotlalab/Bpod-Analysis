@@ -23,7 +23,6 @@ filenames = strings(numFiles,1);
             firstlever(i) = NaN;
         elseif isfield(SessionData.RawEvents.Trial{1,i}.Events,'Condition1')
             lickbeforepress(i) = SessionData.RawEvents.Trial{1,i}.Events.Condition1;
-            
             firstlever(i) = NaN;
         else
             lever = SessionData.RawEvents.Trial{1,i}.Events.Port2Out';

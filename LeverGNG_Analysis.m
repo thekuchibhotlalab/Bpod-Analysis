@@ -1,21 +1,45 @@
 % load data
-filez = dir('/Users/sarahelnozahy/Documents/KF003/*.mat'); % load all of files 
+filez = dir('/Users/sarahelnozahy/Documents/MATLAB/KF003/*.mat'); % load all of files 
 numFiles = length(filez); % number of files
 filenames = strings(numFiles,1); % create empty string array for file names
 rate = zeros(4,1); rate = rate'; % intialize empty array for outcome rates
 probeRate = zeros(4,1); probeRate = probeRate'; % intialize empty array for probe outcome rates
 outcome = []; probe = []; % initalize arrays holding all outcome and probe nums t
 total = []; session = []; trialType =[];
+lever = []; lick = [];
 for i= 1:numFiles
     hit = 0; miss = 0; correctReject = 0; falseAlarm = 0;  % initialize outcome variables for each session
     probeHit = 0; probeMiss = 0; probeCorrectReject = 0; probeFalseAlarm = 0; % initalize probe outcome variables for each session
-    filenames(i) = strcat('/Users/sarahelnozahy/Documents/KF003/', filez(i).name); % increment through each file
+    filenames(i) = strcat('/Users/sarahelnozahy/Documents/MATLAB/KF003/', filez(i).name); % increment through each file
     load(filenames(i)); % load each file
     temp = []; % temp holds num for each outcome
     probeTemp = []; % probe temp holds num for each outcome 
-    totalTemp = []; sessionNum = []; trialTypeTemp = [];
+    totalTemp = []; sessionNum = []; trialTypeTemp = []; leverTemp = []; lickTemp = [];
     SessionData.nTrials = SessionData.nTrials-20;
     for j =20:SessionData.nTrials % increment through all the trials in one given session
+        %% LEVER LATENCY
+        if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss)
+            leverTemp(j,:) = NaN;
+        elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject)
+            leverTemp(j,:) = NaN;
+        else
+            press = SessionData.RawEvents.Trial{1,j}.Events.Port2Out';
+            press = press -  SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1);
+            press = press(press>0);
+            leverTemp(j,:) = press(1);
+        end
+        if ~isfield(SessionData.RawEvents.Trial{1,j}.Events,'Port1In')
+            lickTemp(j,:) = NaN;
+        elseif ((SessionData.RawEvents.Trial{1,j}.Events.Port1In)-(SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1)))> 0
+            licking = SessionData.RawEvents.Trial{1,j}.Events.Port1In';
+            licking = licking - SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1);
+            licking = licking(licking>0);
+%             licking = licking(licking<3);
+            lickTemp(j,:) = licking(1);
+%         else
+%             lickTemp(j,:) = NaN;
+        end
+        %% raw data 
         sessionNum(j,:) = i;
         if SessionData.TrialTypes(1,j) == 3 || SessionData.TrialTypes(1,j) == 4 % probe trials (in future data, this is distinguished by trial type (3 and 4))   
             trialTypeTemp(j,:) = 2;
@@ -43,28 +67,24 @@ for i= 1:numFiles
             probeTemp = nonzeros(probeTemp); % get rid of all 0's (anything not in probe)
         elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.OpenValve) % reinforced hit state
             trialTypeTemp(j,:) = 1;
-
             temp(j,:) = 1;
             totalTemp(j,:) = 1;
             hit = hit +1;
             rate = ([((hit/(hit+miss))*100) ((miss/(hit+miss))*100) rate(3) rate(4)]); 
         elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss) % reinforced miss state
             trialTypeTemp(j,:) = 1;
-
             temp(j,:) = 2;
             totalTemp(j,:) = 2;
             miss = miss +1;
             rate = ([((hit/(hit+miss))*100) ((miss/(hit+miss))*100) rate(3) rate(4)]);
         elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject) % reinforced cr state
             trialTypeTemp(j,:) = 1;
-           
             temp(j,:) = 3;
             totalTemp(j,:) = 3;
             correctReject = correctReject+1;
             rate = ([rate(1) rate(2) ((correctReject/(correctReject+falseAlarm))*100) ((falseAlarm/(correctReject+falseAlarm))*100)]);
         elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.Punish) % reinforced fa state
             trialTypeTemp(j,:) = 1;
-           
             temp(j,:) = 4;
             totalTemp(j,:) =4;
             falseAlarm = falseAlarm +1;
@@ -75,18 +95,22 @@ temp = nonzeros(temp); % get rid of all 0's (anything not in probe)
 trialTypeTemp = nonzeros(trialTypeTemp);
 totalTemp = nonzeros(totalTemp);
 sessionNum = nonzeros(sessionNum);
+leverTemp = nonzeros(leverTemp);
+lickTemp = nonzeros(lickTemp);
 trialType = [trialType; trialTypeTemp];
 session = [session; sessionNum]; 
 total = [total;totalTemp];
+lever = [lever;leverTemp];
+lick = [lick; lickTemp];
 outcome = [outcome; temp]; % concatenate all reinforced nums from all trials
 probe = [probe; probeTemp]; % concatenate all probe nums from all trials
 end
 hit = 0; miss= 0; cr =0; fa=0;
 phit = 0; pmiss = 0; pcr = 0; pfa =0;
-% outcome = outcome(1:5700); % cut array into 6700 trials instead of 6707
-% probe = probe(1:360);
-% outcome = reshape(outcome, 100, 57); % separate into bins of 100
-% probe = reshape(probe, 20, 18); % separate into bins of 100
+outcome = outcome(1:5700); % cut array into 6700 trials instead of 6707
+probe = probe(1:360);
+outcome = reshape(outcome, 100, 57); % separate into bins of 100
+probe = reshape(probe, 20, 18); % separate into bins of 100
 numHits = []; numMisses = []; hitRate = [];  
 numphits = []; numpmisses = []; probeHitRate = [];
 numCRs = []; numFAs = []; faRate = [];
@@ -129,6 +153,36 @@ for m = 1:18 % through all cols of probe outcomes
     probeFARate(m) = [(numpfas(m)/(numpcrs(m)+numpfas(m)))*100]; 
     phit = 0; pmiss = 0; pcr = 0; pfa = 0; % clear outcome vars after 100 
 end
+dReinforced = []; dProbe = [];
+for i =1:57
+    hitRate(i) = hitRate(i)/100;
+    faRate(i) = faRate(i)/100;
+    if hitRate(i) == 0
+        hitRate(i) = 0.005;
+    elseif hitRate(i) == 1
+        hitRate(i) = 0.995;
+    elseif faRate(i) == 0
+        faRate(i) = 0.005;
+    elseif faRate(i) == 1
+        faRate(i) = 0.995;
+    end
+    dReinforced(i,:) = (norminv(hitRate(i))) - (norminv(faRate(i)));
+end
+for i = 1:18
+    probeHitRate(i) = probeHitRate(i)/100;
+    probeFARate(i) = probeFARate(i)/100;
+    if probeHitRate(i) == 0
+        probeHitRate(i) = 0.005;
+    elseif probeHitRate(i) == 1
+        probeHitRate(i) = 0.995;
+    elseif probeFARate(i) == 0
+        probeFARate(i) = 0.005;
+    elseif probeFARate(i) == 1
+        probeFARate(i) = 0.995;
+    end
+    dProbe(i,:) = (norminv(probeHitRate(i))) - (norminv(probeFARate(i)));
+end
+
 figure('name','KF003 Analysis','Position', [1250 100 500 600]); % create figure for plots
 smoothsize = 5; % size of smoothed line
 x = 20:20:360; % HEREEEE
