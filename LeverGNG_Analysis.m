@@ -12,15 +12,15 @@ for i = 1:numFiles
     SessionData.nTrials = SessionData.nTrials-20; % get rid of last 20 trials
     for j= 20:SessionData.nTrials % increment through all the trials in one given session but get rid of first 20 trials
         % LEVER LATENCY
-        if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss)
+        if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss) % no press
             leverTemp(j,:) = NaN;
-        elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject)
+        elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject) % no press
             leverTemp(j,:) = NaN;
         else
-            press = SessionData.RawEvents.Trial{1,j}.Events.Port2Out';
-            press = press -  SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1);
-            press = press(press>0);
-            leverTemp(j,:) = press(1);
+            press = SessionData.RawEvents.Trial{1,j}.Events.Port2Out'; % times of all presses
+            press = press -  SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1); % difference of presses from beginning of response window
+            press = press(press>0); % take all positive times, time after response window
+            leverTemp(j,:) = press(1); % take first press after response window begins
         end
         % LICK LATENCY
         if ~isfield(SessionData.RawEvents.Trial{1,j}.Events,'Port1In') % check if licking occurs during given trial
@@ -139,7 +139,7 @@ for t = 1:s2(2) % through bins
     faRate(t) = [(fa/(cr+fa))*100];  % false alarm rate per 100 block
     hit = 0; miss = 0; cr = 0; fa = 0; % clear outcome vars after 100
 end
-for o = block+1:length(outcome) % for leftover data after 100!
+for o = block+1:length(outcome) % for leftover data after 100!!
     if outcome(o) == 1
         hit = hit+1;
     elseif outcome(o) == 2
@@ -172,10 +172,11 @@ xlabel('Trials'); ylim([0 110]); ylabel('Rate %'); xlim([0 block+500]);% set x-a
 title('Average Learning Trajectories for Probe Context');
 
 %BEHAVIORAL SENSITIVITY
-transitions2 = diff(session); % check when transitions occur in context (from 1 to 2)
-sessionStarts = find(transitions2 == 1) +1;
-sessionStarts = [1; sessionStarts; length(data)]; 
-dhit = 0; dmiss = 0; dcr = 0; dfa = 0;
+transitions2 = diff(session); % check when transitions occur in session
+sessionStarts = find(transitions2 == 1) +1; 
+sessionStarts = [1; sessionStarts; length(data)]; % session changes
+%initialize variables for d' calculations
+dhit = 0; dmiss = 0; dcr = 0; dfa = 0; 
 probedhit = 0; probedmiss = 0; probedcr = 0; probedfa = 0;
 dhitRate = []; dfaRate = []; probedhitRate = []; probedfaRate = [];
 dReinforced =[]; dProbe = [];
