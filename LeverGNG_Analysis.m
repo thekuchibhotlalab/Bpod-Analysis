@@ -171,33 +171,60 @@ plot(probeGraph(:,1), movmedian(probeGraph(:,3),smoothsize),'Color','r','LineWid
 xlabel('Trials'); ylim([0 110]); ylabel('Rate %'); xlim([0 block+500]);% set x-axis  
 title('Average Learning Trajectories for Probe Context');
 
-% BEHAVIORAL SENSITIVITY
-% dReinforced = []; dProbe = [];
-% for r =1:length
-%     hitRate(i) = hitRate(i)/100;
-%     faRate(i) = faRate(i)/100;
-%     if hitRate(i) == 0
-%         hitRate(i) = 0.005;
-%     elseif hitRate(i) == 1
-%         hitRate(i) = 0.995;
-%     elseif faRate(i) == 0
-%         faRate(i) = 0.005;
-%     elseif faRate(i) == 1
-%         faRate(i) = 0.995;
-%     end
-%     dReinforced(i,:) = (norminv(hitRate(i))) - (norminv(faRate(i)));
-% end
-% for i = 1:18
-%     probeHitRate(i) = probeHitRate(i)/100;
-%     probeFARate(i) = probeFARate(i)/100;
-%     if probeHitRate(i) == 0
-%         probeHitRate(i) = 0.005;
-%     elseif probeHitRate(i) == 1
-%         probeHitRate(i) = 0.995;
-%     elseif probeFARate(i) == 0
-%         probeFARate(i) = 0.005;
-%     elseif probeFARate(i) == 1
-%         probeFARate(i) = 0.995;
-%     end
-%     dProbe(i,:) = (norminv(probeHitRate(i))) - (norminv(probeFARate(i)));
-% end
+%BEHAVIORAL SENSITIVITY
+transitions2 = diff(session); % check when transitions occur in context (from 1 to 2)
+sessionStarts = find(transitions2 == 1) +1;
+sessionStarts = [1; sessionStarts; length(data)]; 
+dhit = 0; dmiss = 0; dcr = 0; dfa = 0;
+probedhit = 0; probedmiss = 0; probedcr = 0; probedfa = 0;
+dhitRate = []; dfaRate = []; probedhitRate = []; probedfaRate = [];
+dReinforced =[]; dProbe = [];
+for m = 1:length(file)
+    sessionBlock = [data(sessionStarts(m)+1:sessionStarts(m+1), 5), data(sessionStarts(m)+1:sessionStarts(m+1), 3)]; 
+    for n = 1:length(sessionBlock)
+        if sessionBlock{n,2} == 1
+            if sessionBlock{n,1} == 1
+                dhit = dhit+1; 
+            elseif sessionBlock{n,1} == 2
+                dmiss = dmiss+1;
+            elseif sessionBlock{n,1} == 3
+                dcr = dcr+1;
+            elseif sessionBlock{n,1} == 4
+                dfa = dfa+1;            
+            end
+        else
+            if sessionBlock{n,1} == 1
+                probedhit = probedhit+1; 
+            elseif sessionBlock{n,1} == 2
+                probedmiss = probedmiss+1;
+            elseif sessionBlock{n,1} == 3
+                probedcr = probedcr+1;
+            elseif sessionBlock{n,1} == 4
+                probedfa = probedfa+1;            
+            end
+        end
+    end
+    if (dhit/(dhit+dmiss)) == 0
+        dhitRate(m,:) = (1-(1/(2*length(sessionBlock))));
+        dfaRate(m,:) = (1- (1/(2*length(sessionBlock))));
+    elseif (dhit/(dhit+dmiss)) == 1
+        dhitRate(m,:) = 1/(2*length(sessionBlock));
+        dfaRate(m,:) = 1/(2*length(sessionBlock));
+    else
+        dhitRate(m,:) = [(dhit/(dhit+dmiss))]; 
+        dfaRate(m,:) = [(dfa/(dcr+dfa))]; 
+    end
+    dReinforced(m,:) = (norminv(dhitRate(m))) - (norminv(dfaRate(m)));
+
+    if (probedhit/(probedhit+probedmiss)) == 0
+        probedhitRate(m,:) = (1-(1/(2*20)));
+        probedfaRate(m,:) = (1-(1/(2*20)));
+    elseif (probedhit/(probedhit+probedmiss)) == 1
+        probedhitRate(m,:) = (1/(2*20));
+        probedfaRate(m,:) = (1/(2*20));
+    else
+        probedhitRate(m,:) = [(probedhit/(probedhit+probedmiss))]; 
+        probedfaRate(m,:) = [(probedfa/(probedcr+probedfa))]; 
+    end
+    dProbe(m,:) = (norminv(probedhitRate(m))) - (norminv(probedfaRate(m)));
+end

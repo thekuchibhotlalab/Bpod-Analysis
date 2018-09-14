@@ -1,5 +1,5 @@
 %% load data
-subj = 'KF003'; % INPUT SUBJECT NAME HERE 
+subj = 'KF002'; % INPUT SUBJECT NAME HERE 
 subjectPath = strcat('/Users/sarahelnozahy/Documents/MATLAB/', subj, '/*.mat'); % may have to alter file path here and on line 9
 file = dir(subjectPath); % load all of files 
 numFiles = length(file); % number of files
@@ -11,50 +11,32 @@ for i = 1:numFiles
     outcomeTemp = []; sessionNum = []; contextTemp = []; leverTemp = []; lickTemp = []; toneTemp = []; % initialize temp vars
     SessionData.nTrials = SessionData.nTrials-20; % get rid of last 20 trials
     for j= 20:SessionData.nTrials % increment through all the trials in one given session but get rid of first 20 trials
-        % LEVER LATENCY
-        if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss)
-            leverTemp(j,:) = NaN;
-        elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject)
-            leverTemp(j,:) = NaN;
-        else
-            press = SessionData.RawEvents.Trial{1,j}.Events.Port2Out';
-            press = press -  SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1);
-            press = press(press>0);
-            leverTemp(j,:) = press(1);
-        end
         % LICK LATENCY
-        if ~isfield(SessionData.RawEvents.Trial{1,j}.Events,'Port1In') % check if licking occurs during given trial
-            lickTemp(j,:) = NaN; % if no licking occurs, latency is NaN
+        if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss)
+            lickTemp(j,:) = NaN;
+        elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject)
+            lickTemp(j,:) = NaN;
         else % if licking does occur during trial
             licking = SessionData.RawEvents.Trial{1,j}.Events.Port1In'; % times that lick occurs
-            licking = licking - SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1); % calculate difference from time point of beginning of response window
-            if licking > 0 % if there are any positive numbers, meaning lick happened after response window began
-                licking = licking(licking>0); % take all positive times
-                licking = licking(licking<3); % take all times less than 3 (response window is 3 seconds long)
-                if isempty(licking) % if no times satisfy the above conditions
-                    lickTemp(j,:) = NaN; % no lick during response window
-                else
-                    lickTemp(j,:) = licking(1); % take first lick from given window
-                end
-            else
-                lickTemp(j,:) = NaN; % no positive numbers, lick occurring only after response window
-            end
-        end
+            licking = licking - SessionData.RawEvents.Trial{1,j}.States.WaitForLick(1); % calculate difference from time point of beginning of response window
+            licking = licking(licking>0); % take all positive times
+            lickTemp(j,:) = licking(1); % take first lick 
+        end % need to remove NaN's!!
         % RAW DATA
         sessionNum(j,:) = i; % session number data
         if SessionData.TrialTypes(1,j) == 3 || SessionData.TrialTypes(1,j) == 4 % probe trials (in future data, this is distinguished by trial type (3 and 4))   
             contextTemp(j,:) = 2; % add 2 for probe context
             if ~isnan(SessionData.RawEvents.Trial{1,j}.States.OpenValve) % probe hit state
-                outcomeTemp(j,:) = 5; % add 1 for hit to total data 
+                outcomeTemp(j,:) = 1; % add 1 for hit to total data 
                 toneTemp(j,:) = 1; % add 1 for tone type (GO)
             elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss) % probe miss state
-                outcomeTemp(j,:) = 6; % add 2 for miss to total data
+                outcomeTemp(j,:) = 2; % add 2 for miss to total data
                 toneTemp(j,:) = 1; % add 1 for tone type (GO)
             elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.CorrectReject) % probe cr state
-                outcomeTemp(j,:) = 7; % add 3 for correct reject to total data
+                outcomeTemp(j,:) = 3; % add 3 for correct reject to total data
                 toneTemp(j,:) = 2; % add 2 for tone type (NOGO)
             elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.Punish) % probe punish state
-                outcomeTemp(j,:) = 8; % add 4 for false alarm to total data
+                outcomeTemp(j,:) = 4; % add 4 for false alarm to total data
                 toneTemp(j,:) = 2; % add 2 for tone type (NOGO)
             end
         elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.OpenValve) % reinforced hit state
@@ -79,7 +61,6 @@ sessionNum = nonzeros(sessionNum); session = [session; sessionNum]; % get rid of
 contextTemp = nonzeros(contextTemp); context = [context; contextTemp]; % get rid of zero gaps, add context data to all
 toneTemp = nonzeros(toneTemp); tone = [tone; toneTemp]; % get rid of zero gaps, add tone data to all
 outcomeTemp = nonzeros(outcomeTemp); outcome = [outcome; outcomeTemp]; % get rid of zero gaps, add outcome data to all
-leverTemp = nonzeros(leverTemp); lever = [lever;leverTemp]; % get rid of zero gaps, add lever data to all
 lickTemp = nonzeros(lickTemp); lick = [lick; lickTemp]; % get rid of zero gaps, add lick data to all
 end % through one session
 for h = 1:length(outcome) % number of trials for cell
@@ -87,8 +68,8 @@ for h = 1:length(outcome) % number of trials for cell
 end
 
 % COMPILE ALL DATA
-labels = {'Session' 'Trial' 'Context' 'Tone' 'LeverResponse' 'LeverLatency' 'LickLatency'}; % data labels
-all = [session, trialNum, context, tone, outcome, lever lick]; % compile all of data
+labels = {'Session' 'Trial' 'Context' 'Tone' 'LickResponse' 'LickLatency'}; % data labels
+all = [session, trialNum, context, tone, outcome, lick]; % compile all of data
 data =[labels;num2cell(all)]; % load data
 
 % PROBE CALCULATIONS
@@ -176,25 +157,38 @@ transitions2 = diff(session); % check when transitions occur in context (from 1 
 sessionStarts = find(transitions2 == 1) +1;
 sessionStarts = [1; sessionStarts; length(data)]; 
 dhit = 0; dmiss = 0; dcr = 0; dfa = 0;
-dhitRate = []; dfaRate = [];
+probedhit = 0; probedmiss = 0; probedcr = 0; probedfa = 0;
+dhitRate = []; dfaRate = []; probedhitRate = []; probedfaRate = [];
+dReinforced =[]; dProbe = [];
 for m = 1:length(file)
     sessionBlock = [data(sessionStarts(m)+1:sessionStarts(m+1), 5), data(sessionStarts(m)+1:sessionStarts(m+1), 3)]; 
-    
     for n = 1:length(sessionBlock)
-        if sessionBlock{n,1} == 1
-            dhit = dhit+1; 
-        elseif sessionBlock{n,1} == 2
-            dmiss = dmiss+1;
-        elseif sessionBlock{n,1} == 3
-            dcr = dcr+1;
-        elseif sessionBlock{n,1} == 4
-            dfa = dfa+1;            
+        if sessionBlock{n,2} == 1
+            if sessionBlock{n,1} == 1
+                dhit = dhit+1; 
+            elseif sessionBlock{n,1} == 2
+                dmiss = dmiss+1;
+            elseif sessionBlock{n,1} == 3
+                dcr = dcr+1;
+            elseif sessionBlock{n,1} == 4
+                dfa = dfa+1;            
+            end
+        else
+            if sessionBlock{n,1} == 1
+                probedhit = probedhit+1; 
+            elseif sessionBlock{n,1} == 2
+                probedmiss = probedmiss+1;
+            elseif sessionBlock{n,1} == 3
+                probedcr = probedcr+1;
+            elseif sessionBlock{n,1} == 4
+                probedfa = probedfa+1;            
+            end
         end
     end
     if (dhit/(dhit+dmiss)) == 0
         dhitRate(m,:) = (1-(1/(2*length(sessionBlock))));
         dfaRate(m,:) = (1- (1/(2*length(sessionBlock))));
-    elseif (dhit/(dhit+dmiss)) == 100
+    elseif (dhit/(dhit+dmiss)) == 1
         dhitRate(m,:) = 1/(2*length(sessionBlock));
         dfaRate(m,:) = 1/(2*length(sessionBlock));
     else
@@ -202,4 +196,16 @@ for m = 1:length(file)
         dfaRate(m,:) = [(dfa/(dcr+dfa))]; 
     end
     dReinforced(m,:) = (norminv(dhitRate(m))) - (norminv(dfaRate(m)));
+
+    if (probedhit/(probedhit+probedmiss)) == 0
+        probedhitRate(m,:) = (1-(1/(2*20)));
+        probedfaRate(m,:) = (1-(1/(2*20)));
+    elseif (probedhit/(probedhit+probedmiss)) == 1
+        probedhitRate(m,:) = (1/(2*20));
+        probedfaRate(m,:) = (1/(2*20));
+    else
+        probedhitRate(m,:) = [(probedhit/(probedhit+probedmiss))]; 
+        probedfaRate(m,:) = [(probedfa/(probedcr+probedfa))]; 
+    end
+    dProbe(m,:) = (norminv(probedhitRate(m))) - (norminv(probedfaRate(m)));
 end
