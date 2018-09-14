@@ -27,17 +27,16 @@ for i = 1:numFiles
             lickTemp(j,:) = NaN; % if no licking occurs, latency is NaN
         else % if licking does occur during trial
             licking = SessionData.RawEvents.Trial{1,j}.Events.Port1In'; % times that lick occurs
-            licking = licking - SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1); % calculate difference from time point of beginning of response window
-            if licking > 0 % if there are any positive numbers, meaning lick happened after response window began
-                licking = licking(licking>0); % take all positive times
-                licking = licking(licking<3); % take all times less than 3 (response window is 3 seconds long)
-                if isempty(licking) % if no times satisfy the above conditions
-                    lickTemp(j,:) = NaN; % no lick during response window
+            licking = licking - SessionData.RawEvents.Trial{1,j}.States.WaitForPress(1); %
+            if licking > 0 
+                licking = licking(licking>0);
+                licking = licking(licking<3);
+                if isempty(licking)
+                    lickTemp(j,:) = NaN;
                 else
-                    lickTemp(j,:) = licking(1); % take first lick from given window
+                    lickTemp(j,:) = licking(1);
                 end
-            else
-                lickTemp(j,:) = NaN; % no positive numbers, lick occurring only after response window
+            
             end
         end
         % RAW DATA
@@ -87,8 +86,8 @@ for h = 1:length(outcome) % number of trials for cell
 end
 
 % COMPILE ALL DATA
-labels = {'Session' 'Trial' 'Context' 'Tone' 'LeverResponse' 'LeverLatency' 'LickLatency'}; % data labels
-all = [session, trialNum, context, tone, outcome, lever lick]; % compile all of data
+labels = {'Session' 'Trial' 'Context' 'Tone' 'LeverResponse' 'LeverLatency'}; % data labels
+all = [session, trialNum, context, tone, outcome, lever]; % compile all of data
 data =[labels;num2cell(all)]; % load data
 
 % PROBE CALCULATIONS
@@ -173,7 +172,7 @@ title('Average Learning Trajectories for Probe Context');
 
 % BEHAVIORAL SENSITIVITY
 % dReinforced = []; dProbe = [];
-% for r =1:length
+% for i =1:57
 %     hitRate(i) = hitRate(i)/100;
 %     faRate(i) = faRate(i)/100;
 %     if hitRate(i) == 0
