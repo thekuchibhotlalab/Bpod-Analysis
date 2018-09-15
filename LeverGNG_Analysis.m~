@@ -40,6 +40,7 @@ for i = 1:numFiles
                 lickTemp(j,:) = NaN; % no positive numbers, lick occurring only after response window
             end
         end
+        
         % RAW DATA
         sessionNum(j,:) = i; % session number data
         if SessionData.TrialTypes(1,j) == 3 || SessionData.TrialTypes(1,j) == 4 % probe trials (in future data, this is distinguished by trial type (3 and 4))   
@@ -139,7 +140,7 @@ for t = 1:s2(2) % through bins
     faRate(t) = [(fa/(cr+fa))*100];  % false alarm rate per 100 block
     hit = 0; miss = 0; cr = 0; fa = 0; % clear outcome vars after 100
 end
-for o = block+1:length(outcome) % for leftover data after 100!
+for o = block+1:length(outcome) % for leftover data after 100!!
     if outcome(o) == 1
         hit = hit+1;
     elseif outcome(o) == 2
@@ -172,10 +173,11 @@ xlabel('Trials'); ylim([0 110]); ylabel('Rate %'); xlim([0 block+500]);% set x-a
 title('Average Learning Trajectories for Probe Context');
 
 %BEHAVIORAL SENSITIVITY
-transitions2 = diff(session); % check when transitions occur in context (from 1 to 2)
-sessionStarts = find(transitions2 == 1) +1;
-sessionStarts = [1; sessionStarts; length(data)]; 
-dhit = 0; dmiss = 0; dcr = 0; dfa = 0;
+transitions2 = diff(session); % check when transitions occur in session
+sessionStarts = find(transitions2 == 1) +1; 
+sessionStarts = [1; sessionStarts; length(data)]; % session changes
+%initialize variables for d' calculations
+dhit = 0; dmiss = 0; dcr = 0; dfa = 0; 
 probedhit = 0; probedmiss = 0; probedcr = 0; probedfa = 0;
 dhitRate = []; dfaRate = []; probedhitRate = []; probedfaRate = [];
 dReinforced =[]; dProbe = [];
@@ -228,3 +230,11 @@ for m = 1:length(file)
     end
     dProbe(m,:) = (norminv(probedhitRate(m))) - (norminv(probedfaRate(m)));
 end
+% Lick plot data
+lickData = [];
+for y = 1:length(data)
+    if ~isnan(data{y,7})
+        lickData(y) = data{y,2};
+    end
+end
+        

@@ -40,6 +40,7 @@ for i = 1:numFiles
                 lickTemp(j,:) = NaN; % no positive numbers, lick occurring only after response window
             end
         end
+        
         % RAW DATA
         sessionNum(j,:) = i; % session number data
         if SessionData.TrialTypes(1,j) == 3 || SessionData.TrialTypes(1,j) == 4 % probe trials (in future data, this is distinguished by trial type (3 and 4))   
@@ -229,3 +230,12 @@ for m = 1:length(file)
     end
     dProbe(m,:) = (norminv(probedhitRate(m))) - (norminv(probedfaRate(m)));
 end
+% Lick plot data
+lickData = [];
+for y = 1:length(data)
+    if ~isnan(data{y,7})
+        lickData = [lickData; data(y,2), data(y,7)];
+    end
+end % lick data has trial number and corresponding lick latency (ignoring NaN's!)
+% can average out how you think
+        
