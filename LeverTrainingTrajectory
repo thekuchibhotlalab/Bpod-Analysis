@@ -1,0 +1,99 @@
+
+%%RESPONSE TRAJECTORIES FOR LEVER TRAINING
+%% load data
+subj = 'KF010'; % INPUT SUBJECT NAME HERE 
+subjectPath = strcat('/Users/sarahelnozahy/Documents/MATLAB/Mice/', subj, '/*.mat'); % may have to alter file path here and on line 9
+file = dir(subjectPath); % load all of files 
+numFiles = length(file); % number of files
+filenames = strings(numFiles,1); % create empty string array for file names
+outcome = []; session = []; trialNum = []; % initalize all vars
+hitTotal = []; missTotal = []; faTotal= []; session = []; trialNum = [];outcome = [];
+
+for i = 1:numFiles
+    filenames(i) = strcat('/Users/sarahelnozahy/Documents/MATLAB/Mice/', subj,'/', file(i).name);
+    load(filenames(i));
+    outcomeTemp = []; sessionNum = []; 
+    hit = 0; miss= 0; fa =0; 
+    if SessionData.nTrials > 50 %% avoid sessions that precede actual lever GNG
+        for j= 1:SessionData.nTrials
+        sessionNum(j,:) = i;
+            if ~isnan(SessionData.RawEvents.Trial{1,j}.States.Drinking)
+                outcomeTemp(j,:) = 1; % hit
+                hit = hit+1;
+            elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.Miss)
+                outcomeTemp(j,:) = 2; % miss
+                miss = miss+1;
+            elseif ~isnan(SessionData.RawEvents.Trial{1,j}.States.StopForLick)
+                outcomeTemp(j,:) = 3; %FA
+                fa = fa+1;
+            end 
+        end
+        hitTotal = [hitTotal; hit];
+        missTotal = [missTotal; miss];
+        faTotal = [faTotal; fa];
+        sessionNum = nonzeros(sessionNum); session = [session; sessionNum];
+        outcomeTemp = nonzeros(outcomeTemp); outcome = [outcome; outcomeTemp];
+    end
+end
+for k = 1:length(outcome) % number of trials for cell
+    trialNum(k,:) = k;
+end
+labels = {'Session' 'Trial' 'LeverResponse'};
+all = [session, trialNum, outcome];
+data = [labels;num2cell(all)];
+
+% %%Session calculations
+% figureTitle = strcat(subj, 'Trajectory'); 
+% figure('name', figureTitle,'Position', [1250 100 500 600]); % create figure for plots
+% smoothsize = 5;
+% plot(hitTotal, 'color', 'g'); hold on;
+% plot(movmedian(hitTotal,smoothsize),'Color','g','LineWidth',5); hold on; % smoothed line 
+% plot(faTotal, 'color', 'r'); hold on;
+% plot(movmedian(faTotal,smoothsize),'Color','r','LineWidth',5); hold on; % smoothed line 
+% xlabel('Sessions'); ylabel('# of Responses'); title('Responses over training sessions');
+% plot(missTotal, 'color', 'b'); hold on;
+% plot(movmedian(missTotal,smoothsize),'Color','b','LineWidth',5); hold on; % smoothed line 
+
+%%Block calculations
+s1 = size(outcome, 1); % take all of outcome data
+block = s1-mod(s1, 50); % split outcome data into bins of 50
+bins = reshape(outcome(1:block), 50, []); % reshape bins into blocks of 50
+s2 = size(bins); % num of bins
+h = 0; f = 0; m = 0; mTotal = []; hTotal = []; fTotal = [];
+for t = 1:s2(2) % through bins
+    for l = 1:s2(1) % through trials in each bin
+        if bins(l,t) == 1
+            h = h +1;
+        elseif bins(l,t) == 3
+            f = f + 1;
+        elseif bins(l,t) == 2
+            m =m+1;
+        end
+    end
+    hTotal = [hTotal;h];
+    mTotal = [mTotal; m];
+    fTotal = [fTotal; f];
+    h = 0; f =0; m = 0;
+end
+for o = block+1:length(outcome) % leftover after last 50
+    if outcome(o) == 1
+        h = h+1;
+    elseif outcome(o) == 2
+        m = m+1;
+    elseif outcome(o) == 3
+        f = f+1;
+    end
+end
+hTotal = [hTotal; h];
+mTotal = [mTotal; m];
+fTotal = [fTotal; f];
+figureTitle = strcat(subj, 'Trajectory'); 
+figure('name', figureTitle,'Position', [1250 100 500 600]); % create figure for plots
+smoothsize = 5;
+plot(hTotal, 'color', 'g'); hold on;
+plot(movmedian(hTotal,smoothsize),'Color','g','LineWidth',5); hold on; % smoothed line 
+plot(fTotal, 'color', 'r'); hold on;
+plot(movmedian(fTotal,smoothsize),'Color','r','LineWidth',5); hold on; % smoothed line 
+xlabel('Sessions'); ylabel('# of Responses'); title('Responses over 50 trial blocks');
+plot(mTotal, 'color', 'b'); hold on;
+plot(movmedian(mTotal,smoothsize),'Color','b','LineWidth',5); hold on; % smoothed line 
